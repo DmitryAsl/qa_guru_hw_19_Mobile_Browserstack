@@ -1,5 +1,3 @@
-from contextlib import redirect_stderr
-
 from appium.webdriver.common.appiumby import AppiumBy
 import allure
 from selene import browser, have
@@ -26,5 +24,5 @@ def test_search_selenium_and_click():
         results = browser.all((AppiumBy.ID, "org.wikipedia.alpha:id/page_list_item_title"))
         results.should(have.size_greater_than(0))
 
-    with allure.step('Verify content found'):
+    with allure.step('Click on title'):
         results.first.should(have.text(search_string)).click()

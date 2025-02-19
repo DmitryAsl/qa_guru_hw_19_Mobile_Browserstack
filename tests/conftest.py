@@ -1,12 +1,14 @@
 import os
-
+import allure
+from utils.attach import attach_screenshot, attach_video, attach_page_dump
+import allure_commons
 import pytest
 from appium import webdriver
 from appium.options.android import UiAutomator2Options
-from appium.webdriver.common.appiumby import AppiumBy
-from selene import browser
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as have
+from selene import browser, support
+
+import config
+
 
 @pytest.fixture(scope='function', autouse=True)
 def mobile_management():
@@ -23,19 +25,32 @@ def mobile_management():
         'bstack:options': {
             "projectName": "First Python project",
             "buildName": "browserstack-build-1",
-            "sessionName": "BStack first_test_3",
+            "sessionName": "BStack first_test_4",
 
             # Set your access credentials
-            "userName": "diman_1Dr5Hu",
-            "accessKey": "JYchTEuMdAzLtpdKaRyf"
+            "userName": config.bstack_user_name,
+            "accessKey": config.bstack_access_key
         }
     })
 
-    browser.config.driver = webdriver.Remote("http://hub.browserstack.com/wd/hub", options=options)
+    with allure.step('Init app session'):
+        browser.config.driver = webdriver.Remote("http://hub.browserstack.com/wd/hub", options=options)
 
-    browser.config.timeout = float(os.getenv('timeout', 10))
+    browser.config.timeout = config.timeout
+
+    browser.config._wait_decorator = support._logging.wait_with(
+        context=allure_commons._allure.StepContext
+    )
 
     yield
 
-    browser.quit()
+    attach_screenshot(browser)
 
+    attach_page_dump(browser)
+
+    bstack_session_id = browser.driver.session_id
+
+    with allure.step('Tear down app session'):
+        browser.quit()
+
+    attach_video(bstack_session_id)
